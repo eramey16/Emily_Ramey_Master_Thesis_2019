@@ -1,0 +1,54 @@
+\chapter{Experiments}
+
+\section{Toy Model Simulator}
+- Simple simulator which traces the path of gamma rays through our detector
+- Pros: allows us to test code in a controlled environment, lets us develop on something we KNOW works
+- Cons: Not as detailed as Geant, there are physical effects we will miss that contribute to our error (background radiation, scatters in support material, electronic effects)
+\subsection{Toy model code}
+- pseudocode
+\subsection{Formulas and Parameters}
+- formulas and parameters
+    - all gamma-rays are at normal incidence
+    - Uniformly distributed scattering angle between x and x
+    - The real distribution is super not uniform
+    - Energy deposit is calculated from that
+    - Scattering vector is then rotated randomly about the initial direction, closer to what happens in nature, would depend on the initial momentum of the electron (probably)
+    - As the photon passes each layer, it has an x chance of interacting, so an exponential distribution
+    - This is absolutely not how it works in nature
+    - Despite none of the probabilities matching their physical equivalents, none of the paths we simulate are impossible since we calculate the energy deposits correctly, but many are likely improbable
+    - This is ok for now because our reconstruction algorithm isn't based on how probable each scatter direction is, but on how well each scatter matches up its energy and physical angles (which can be affected by noise)
+    - an improvement to this approach could be to calculate scattering angles and directions based on conservation of energy/momentum instead.
+- how data is processed and saved
+    - data is saved as a list of Hit data types for each photon (x, y, z, E)
+    - which go into a list of Event data type (Hits, numHits)
+    - and a list of Result data types (first two hits, eta, error in eta)
+    - we use the Hit values to reconstruct the events and the Result values to check our work
+    
+To help us fine-tune our algorithm, we built a simple gamma-ray simulator which allows us to test our code in a controlled environment. Overall, it is not very accurate to what we would see in real photon-matter interactions, but the simplicity of the model gives us more control over its parameters and made it much easier to test our algorithm during its development.
+
+This simulator generates gamma rays at normal incidence, meaning they hit the detector in the center, perpendicular to its face. We then choose a uniformly random scattering angle, and the next scatter or absorption in the detector is calculated based on a photon-matter interaction probability that we also choose. These values do not reflect the actual probabilities of interaction dictated by the laws of physics, but no photon path simulated by this model is physically impossible. In later iterations of the project, it may be useful to generate scattering angles more accurately using the Klein-Nishina formula and the Thomson cross-section\cite{klein-nishina}. After generating the full path of each photon, we save each interaction's position and energy deposit in an array for use in our reconstruction algorithm.
+
+We also are able to simulate the noise level of the detector measurements, for which we use a Gaussian distribution with a variable standard deviation. Again, this is likely not fully accurate to the noise we would see in the true detector, but it is a good enough approximation for our purposes. We use different parameters for the noise in the position readings and energy readings, allowing us to vary them separately and test the impacts on our reconstruction results.
+
+\section{Geant 4 Simulator}
+- How does it compare to other gamma-ray simulators? Are there others like it?
+- 
+
+\section{Hardware} - add more details\\
+The hardware we use to test our algorithm is the Raspberry Pi 3, Model B+. It uses a 4-core ARM processor with a 1.4 GHz processing speed, and has 1 Gb of RAM. Due to its low number of cores and static execution, it is a slower processor than found in most laptops, but it is perfect for testing our software as it is low-power enough to be used as part of a space telescope. The ARM processor is commonly used for scientific applications, and, as NASA has recently commissioned a space processor based on the same architecture, the Raspberry Pi could be the closest hardware we have to what our program will actually be running on in space. We also ran some tests on a machine at Washington University, Cassini, with a more advanced processor for comparison.
+
+\section{Performance Measures}
+In order to evaluate the performance of our algorithm, we use two main performance measures - the number of photons processed per second, and the accuracy. We consider a reconstruction accurate if the first two hits of the reconstruction match the first two hits in the correct sequence, and sometimes call this measure the two-hit accuracy for clarity. We report this statistic as the number of accurate reconstructions over the number of reconstructions total. We also considered power consumption as a measure of performance, but as the power used by the Raspberry Pi is so small as to be negligible for our purposes, it is not studied in-depth.
+
+\section{Variables tested}
+There are many variables that have the potential to affect the algorithm's performance, and we want to specifically examine the trade-offs in reconstruction speed vs. accuracy. The variables we examine are as follows:
+
+\begin{enumerate}
+    \item Hits simulated - The number of hits we simulate per photon
+    \item Hits used - The number of hits used to reconstruct a photon's trajectory. Once the specified number of hits is reached, the sequence with the lowest eta value is presumed to be the correct one.
+    \item Single vs. double precision - As our program is written in C++, we have a choice of whether to use \texttt{float} values (single precision) or \texttt{double} values in our calculations.
+    \item $\chi^2$ cutoff - The p-value we use for our cutoff $\chi^2$ values. Ex: a p-value of .1 would give us a 10\% probability of cutting off a good triple, whereas a p-value of .01 would give us a 1\% probability of doing so.
+    \item $\eta'$-tolerance - The $\eta'$ tolerance is the amount above 1 or below 0 that we will allow for a calculated cos(energy angle). For example, if the $\eta'$-tolerance is 0.2, any sequences containing an $\eta'$ > 1.2 would be cut.
+    \item Predicted spatial and energy noise - Our $\chi^2$ calculations rely on the predicted errors of our $\eta$ and $\eta$ values, so changing the predicted level of error will change the behavior of our algorithm.
+    \item Simulated spatial and energy noise - We would like to investigate the interplay between the predicted noise and the simulated noise for both position and energy calculations
+\end{enumerate}
