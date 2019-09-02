@@ -35,13 +35,9 @@ The p-value of an ordering is related to the probability of getting some $\chi^2
 \end{figure}
 
 \section{Parallelism}
-Our final performance improvement comes from parallelism - each photon's computation may be run in parallel with the others' to reduce the total running time of our algorithm. This means that if any given photon's computation takes longer than real-time there will not be a backlog of events to process, which would delay the localization of a gamma-ray burst or other transient. The easier photons to process, with fewer numbers of hits, will naturally complete first. This is perfect for our problem, as we expect there to be more photons with small numbers of hits than larger numbers of hits. If we need a quick reading of a GRB source, we can get a broader position first using these easier photons and allow the more complicated events to make our estimate more accurate after the fact.
+Our final performance improvement comes from parallelism - each photon's computation may be run in parallel with the others' to reduce the total running time of our algorithm. This means that if any given photon's computation takes longer than real-time there will not be a backlog of events to process, which would delay the localization of a gamma-ray burst or other transient. The easier photons to process, with fewer numbers of hits, will naturally complete first. This is perfect for our problem, as we expect there to be more photons with small numbers of hits than those with larger numbers of hits. If we need a quick reading of a GRB source, we can get a broader position first using these easier-to-calculate photons and allow the more complicated events to increase the accuracy of our estimate after the fact.
 
-As our current level of parallelism was able to adequately meet our time constraints, we do not run any other part of our computation in parallel, but there are several different ways we could implement this depending on future time constraints. For longer computations, we could save 
-
-- We run each photon in parallel, which seems to have had enough of an effect that we do not need to speed up our computations any more.
-- Other places we could use parallelism include running each sub-tree on a different thread, calculating the eta-values in parallel, etc.
-- We could potentially use dynamic parallelism to start new threads when we get a photon with a high number of hits and just run the photons with lower numbers of hits sequentially.
+As our current level of parallelism was able to adequately meet our time constraints, we do not run any other part of our computation in parallel, but there are several different ways we could implement this depending on future time constraints. For longer computations, we could save time by running a certain number of sub-trees in parallel threads and finding the lowest $\chi^2$ afterward. We could also calculate some of the spatial angles in parallel, as these increase proportionally to $N^3$.
 
 \section{Comparison}
 

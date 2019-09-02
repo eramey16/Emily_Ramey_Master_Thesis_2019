@@ -1,34 +1,32 @@
 \chapter{Experiments}
 
 \section{Toy Model Simulator}
-- Simple simulator which traces the path of gamma rays through our detector
-- Pros: allows us to test code in a controlled environment, lets us develop on something we KNOW works
-- Cons: Not as detailed as Geant, there are physical effects we will miss that contribute to our error (background radiation, scatters in support material, electronic effects)
-\subsection{Toy model code}
-- pseudocode
-\subsection{Formulas and Parameters}
-- formulas and parameters
-    - all gamma-rays are at normal incidence
-    - Uniformly distributed scattering angle between x and x
-    - The real distribution is super not uniform
-    - Energy deposit is calculated from that
-    - Scattering vector is then rotated randomly about the initial direction, closer to what happens in nature, would depend on the initial momentum of the electron (probably)
-    - As the photon passes each layer, it has an x chance of interacting, so an exponential distribution
-    - This is absolutely not how it works in nature
-    - Despite none of the probabilities matching their physical equivalents, none of the paths we simulate are impossible since we calculate the energy deposits correctly, but many are likely improbable
-    - This is ok for now because our reconstruction algorithm isn't based on how probable each scatter direction is, but on how well each scatter matches up its energy and physical angles (which can be affected by noise)
-    - an improvement to this approach could be to calculate scattering angles and directions based on conservation of energy/momentum instead.
+Our toy model problem is a very basic simulator that traces the path of gamma rays through an example detector. We do not take the detector material into account, nor do we allow for any types of interactions other than Compton scattering. This allows us to test code in a controlled environment, which is very useful in the development of our reconstruction algorithm and enables us to ensure our code is performing as we expect without the additional errors caused by outside factors. However, due to this simplicity, there will be physical effects present in the real world that we fail to account for in our simulator, such as background radiation, photon scatters in the detector support material, and various electronic effects, that will increase our overall error. We turn to the Geant 4 software, a much more accurate physics simulator, to minimize these errors.
+
+\subsection{Photon simulation}
+The simulator function takes as its parameters the number of photons to generate and the number of hits each photon should have in the detector (including the final absorption). For each photon, we pick an initial energy from a uniform distribution between 100 keV and 20 MeV. We simulate the gamma rays at normal incidence, meaning their initial direction is perpendicular to the layers of the detector (***make a figure?), and each photon is initially centered with respect to the first layer.
+
+Once we have set up our photon, we simulate its interaction with the detector by generating a random set of scattering angles according to the input number of hits. The scattering angles are taken from a uniform distribution from -90 to +90 degrees. We do not simulate back-scatters ($\geq$ 90 degrees) since these are relatively unlikely in the real world. We can then calculate the energy deposit of each hit using formula \ref{eq:compton}, the initial energy, and each scattering angle we have generated.
+
+After calculating the angles and energy deposits, we then must calculate the position of each hit in the detector. To do this, we use a constant scattering probability to figure out which layers the photon will hit. For each hit, we determine the final direction the photon will travel by rotating the scattering angle randomly (with a 360$\deg$ uniform distribution) about the initial photon trajectory. This keeps the scattering angle constant but allows us to vary the scattering direction randomly, which is closer to the true physical phenomenon. Once we have each hit's layer and direction, we can use vector addition to determine each hit's position.
+
 - how data is processed and saved
     - data is saved as a list of Hit data types for each photon (x, y, z, E)
     - which go into a list of Event data type (Hits, numHits)
     - and a list of Result data types (first two hits, eta, error in eta)
     - we use the Hit values to reconstruct the events and the Result values to check our work
-    
-To help us fine-tune our algorithm, we built a simple gamma-ray simulator which allows us to test our code in a controlled environment. Overall, it is not very accurate to what we would see in real photon-matter interactions, but the simplicity of the model gives us more control over its parameters and made it much easier to test our algorithm during its development.
 
-This simulator generates gamma rays at normal incidence, meaning they hit the detector in the center, perpendicular to its face. We then choose a uniformly random scattering angle, and the next scatter or absorption in the detector is calculated based on a photon-matter interaction probability that we also choose. These values do not reflect the actual probabilities of interaction dictated by the laws of physics, but no photon path simulated by this model is physically impossible. In later iterations of the project, it may be useful to generate scattering angles more accurately using the Klein-Nishina formula and the Thomson cross-section\cite{klein-nishina}. After generating the full path of each photon, we save each interaction's position and energy deposit in an array for use in our reconstruction algorithm.
+\subsection{Errors and noise}
+After getting each hit's position and energy deposit, we must simulate some error to approximate the noise level of our detector. We do this using a Gaussian distribution with variable standard deviation, $\sigma_S$. For the position measurements the user inputs the standard deviation in millimeters. For the energy measurements, the standard deviation is a function of the energy:
+\begin{equation}
+\frac{\sigma_E}{E} = a*\frac{1}{E \; in \; keV}
+\end{equation}
+where $a$ is a factor input by the user. We expect based on previous tests of the detector material \cite{}*** that $\sigma_S$ will be about 1 mm and $a$ will be about 0.22.
 
-We also are able to simulate the noise level of the detector measurements, for which we use a Gaussian distribution with a variable standard deviation. Again, this is likely not fully accurate to the noise we would see in the true detector, but it is a good enough approximation for our purposes. We use different parameters for the noise in the position readings and energy readings, allowing us to vary them separately and test the impacts on our reconstruction results.
+Though the probability distributions we use to generate our scattering angles are not the correct ones for Compton scattering, our use of formula \ref{eq:compton} ensures that no interaction we generate would be truly impossible in nature. Our reconstruction algorithm only compares the expected vs. the true angles and does not take the scattering probability into account, so this simulator still provides a fairly good test of our performance in the absence of measurement error. The true distribution of scattering angles is determined by the Klein-Nishina formula and the interaction probability by the Thomson cross-section \cite{klein-nishina}, so in later iterations of this project it may be useful to incorporate these into our toy model, particularly if we choose to integrate some component of the true scattering probabilities in our reconstruction algorithm.
+
+\subsection{Toy model code}
+- pseudocode
 
 \section{Geant 4 Simulator}
 - How does it compare to other gamma-ray simulators? Are there others like it?
