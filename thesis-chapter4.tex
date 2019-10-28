@@ -8,29 +8,59 @@ The simulator function takes as its parameters the number of photons to generate
 
 Once we have set up our photon, we simulate its interaction with the detector by generating a random set of scattering angles according to the input number of hits. The scattering angles are taken from a uniform distribution from -90 to +90 degrees. We do not simulate back-scatters ($\geq$ 90 degrees) since these are relatively unlikely in the real world. We can then calculate the energy deposit of each hit using formula \ref{eq:compton}, the initial energy, and each scattering angle we have generated.
 
-After calculating the angles and energy deposits, we then must calculate the position of each hit in the detector. To do this, we use a constant scattering probability to figure out which layers the photon will hit. For each hit, we determine the final direction the photon will travel by rotating the scattering angle randomly (with a 360$\deg$ uniform distribution) about the initial photon trajectory. This keeps the scattering angle constant but allows us to vary the scattering direction randomly, which is closer to the true physical phenomenon. Once we have each hit's layer and direction, we can use vector addition to determine each hit's position.
-
-- how data is processed and saved
-    - data is saved as a list of Hit data types for each photon (x, y, z, E)
-    - which go into a list of Event data type (Hits, numHits)
-    - and a list of Result data types (first two hits, eta, error in eta)
-    - we use the Hit values to reconstruct the events and the Result values to check our work
+After calculating the angles and energy deposits, we then must calculate the position of each hit in the detector. To do this, we use a constant scattering probability to figure out which layers the photon will hit. For each hit, we determine the final direction the photon will travel by rotating the scattering angle randomly (with a 360$\deg$ uniform distribution) about the initial photon trajectory. This keeps the scattering angle constant but allows us to vary the scattering direction randomly, which is closer to the true physical phenomenon. Once we have each hit's layer and direction, we can use vector addition to determine each hit's position. We randomly shuffle the hits before saving them to better approximate the way we will receive the hit data in the detector. If we saved them in the correct order for each photon it might cause our program runtime to be shorter than it would be in reality.
 
 \subsection{Errors and noise}
 After getting each hit's position and energy deposit, we must simulate some error to approximate the noise level of our detector. We do this using a Gaussian distribution with variable standard deviation, $\sigma_S$. For the position measurements the user inputs the standard deviation in millimeters. For the energy measurements, the standard deviation is a function of the energy:
-\begin{equation}
-\frac{\sigma_E}{E} = a*\frac{1}{E \; in \; keV}
+\begin{equation}\label{eq:sigE}
+\frac{\sigma_E}{E} = a*\frac{1}{E \; (keV)}
 \end{equation}
 where $a$ is a factor input by the user. We expect based on previous tests of the detector material \cite{}*** that $\sigma_S$ will be about 1 mm and $a$ will be about 0.22.
 
 Though the probability distributions we use to generate our scattering angles are not the correct ones for Compton scattering, our use of formula \ref{eq:compton} ensures that no interaction we generate would be truly impossible in nature. Our reconstruction algorithm only compares the expected vs. the true angles and does not take the scattering probability into account, so this simulator still provides a fairly good test of our performance in the absence of measurement error. The true distribution of scattering angles is determined by the Klein-Nishina formula and the interaction probability by the Thomson cross-section \cite{klein-nishina}, so in later iterations of this project it may be useful to incorporate these into our toy model, particularly if we choose to integrate some component of the true scattering probabilities in our reconstruction algorithm.
 
-\subsection{Toy model code}
-- pseudocode
+\begin{algorithm}
+\caption{Toy Model Simulator}\label{recon}
+\begin{algorithmic}[1]
+\Function{simulate}{numEvents, numHits, hits[], events[], results[]}
+    \State init alphas[], W[], k[], x[] \Comment{arrays for the angles, energies, directions,}
+    \State \Comment{and hit positions, respectively}
+    \For{i in numEvents}
+        \State Result \& r $\leftarrow$ results[i] \Comment{set up result and event objects}
+        \State Event e $\leftarrow$ events[i]
+        \State e.hits $\leftarrow$ pointer to hits[]
+        \State e.numHits $\leftarrow$ numHits
+        \State
+        \State r.energy $\leftarrow$ random energy between MIN\_E and MAX\_E \Comment{Generate energies}
+        \State
+        \State alphas[] $\leftarrow$ (numHits-1) random angles between $-\frac{\pi}{2}$ and $\frac{\pi}{2}$ \Comment{generate angles}
+        \State r.eta $\leftarrow$ cos(alphas[0]) \Comment{save initial angle to result}
+        \State 
+        \State calcW(numHits, r.energy, alphas[], W[]) \Comment{calcualate unitless energies}
+        \State calcK(numHits, alphas[], k[]) \Comment{calculate directions}
+        \State calcX(numHits, k[], x[]) \Comment{calculate positions}
+        \State
+        \State perm $\leftarrow$ random permutation of x[] indices
+        \State r.p0, r.p1 $\leftarrow$ perm[0], perm[1] \Comment{First two hit indices}
+        \State 
+        \For{j in numHits}
+            \State E\_dep $\leftarrow$ (W[j] - W[j+1])*$mc^2$ \Comment{Record deposited energy}
+            \State e.hits[perm[j]] $\leftarrow$ (x[j], E\_dep)
+        \EndFor
+        \State
+        \State addNoise(e) \Comment{add measurement noise to the event}
+    \EndFor
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 \section{Geant 4 Simulator}
 - How does it compare to other gamma-ray simulators? Are there others like it?
-- 
+
+Geant 4 is an advanced program developed for the CERN particle accelerator to simulate the passage of particles through matter. It is used in myriad applications such as That we know of, it is the most advanced simulator of its kind, and is able to account for many factors that are not included in our toy model simulator such as background radiation, scatters in detector support material, and electronic effects. Each of these phenomena has a cross-section (probability of occurrence) that is accurately represented in Geant. The program was set up using our detector parameters in previous iterations of the project, and can generate photon events that mimic several different types of radiation, such as a diffuse source, a point source, or even more complicated events such as a gamma-ray burst, which will be very useful in later stages of APT testing.
+
+\section{Data types}
+Data for each hit is saved in a Hit data type, containing an x, y, z position and the energy deposit in MeV. Each photon is represented as an Event data type, which contains an array of Hits and the number of hits total for that photon. Each reconstructed solution is contained in a Result data type, which contains the first two hits of the event, the scattering angle, and the error in the scattering angle (caused by noise). We save an array of Events and (true) Results after our simulation, and use them later to compare to an array of reconstructed Results.
 
 \section{Hardware} - add more details\\
 The hardware we use to test our algorithm is the Raspberry Pi 3, Model B+. It uses a 4-core ARM processor with a 1.4 GHz processing speed, and has 1 Gb of RAM. Due to its low number of cores and static execution, it is a slower processor than found in most laptops, but it is perfect for testing our software as it is low-power enough to be used as part of a space telescope. The ARM processor is commonly used for scientific applications, and, as NASA has recently commissioned a space processor based on the same architecture, the Raspberry Pi could be the closest hardware we have to what our program will actually be running on in space. We also ran some tests on a machine at Washington University, Cassini, with a more advanced processor for comparison.
@@ -39,14 +69,17 @@ The hardware we use to test our algorithm is the Raspberry Pi 3, Model B+. It us
 In order to evaluate the performance of our algorithm, we use two main performance measures - the number of photons processed per second, and the accuracy. We consider a reconstruction accurate if the first two hits of the reconstruction match the first two hits in the correct sequence, and sometimes call this measure the two-hit accuracy for clarity. We report this statistic as the number of accurate reconstructions over the number of reconstructions total. We also considered power consumption as a measure of performance, but as the power used by the Raspberry Pi is so small as to be negligible for our purposes, it is not studied in-depth.
 
 \section{Variables tested}
-There are many variables that have the potential to affect the algorithm's performance, and we want to specifically examine the trade-offs in reconstruction speed vs. accuracy. The variables we examine are as follows:
+There are many variables that have the potential to affect the algorithm's performance, and we want to specifically examine the trade-offs in reconstruction speed vs. accuracy. The parameters we test are as follows:
 
 \begin{enumerate}
-    \item Hits simulated - The number of hits we simulate per photon
-    \item Hits used - The number of hits used to reconstruct a photon's trajectory. Once the specified number of hits is reached, the sequence with the lowest eta value is presumed to be the correct one.
+    \item Power - We use the WITRN U2 USB Power Monitor to test the power used by the raspberry pi, both when it is idle and when it is running our software.
     \item Single vs. double precision - As our program is written in C++, we have a choice of whether to use \texttt{float} values (single precision) or \texttt{double} values in our calculations.
+    \item Hits simulated - The number of hits we simulate per photon (with the toy model).
+    \item Hits used - The number of hits used to reconstruct a photon's trajectory. Once the specified number of hits is reached, the sequence with the lowest eta value is presumed to be the correct one.
     \item $\chi^2$ cutoff - The p-value we use for our cutoff $\chi^2$ values. Ex: a p-value of .1 would give us a 10\% probability of cutting off a good triple, whereas a p-value of .01 would give us a 1\% probability of doing so.
-    \item $\eta'$-tolerance - The $\eta'$ tolerance is the amount above 1 or below 0 that we will allow for a calculated cos(energy angle). For example, if the $\eta'$-tolerance is 0.2, any sequences containing an $\eta'$ > 1.2 would be cut.
+    \item $\eta'$-tolerance - The $\eta'$ tolerance is the amount above 1 or below -1 that we will allow for a calculated cos(energy angle). For example, if the $\eta'$-tolerance is 0.2, any sequences containing an $\eta' > 1.2$ would be cut.
     \item Predicted spatial and energy noise - Our $\chi^2$ calculations rely on the predicted errors of our $\eta$ and $\eta$ values, so changing the predicted level of error will change the behavior of our algorithm.
     \item Simulated spatial and energy noise - We would like to investigate the interplay between the predicted noise and the simulated noise for both position and energy calculations
 \end{enumerate}
+
+Each test is run with certain default values unless otherwise specified. We generally run the algorithm with 5-hit events, with all the hits used in the reconstruction. We use a p-value of 0.001, an $\eta'$ tolerance of 1.0, a predicted energy noise of $a=0.22$ (equation \ref{eq:sigE}), and a predicted spatial noise of 1 mm. Our default levels for generated noise are the same as those of our predicted noise.
