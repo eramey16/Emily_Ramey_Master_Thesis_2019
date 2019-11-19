@@ -1,5 +1,24 @@
 \chapter{Conclusion}
 
 \section{Discussion}
+- through a tree search, we were able to improve the average-case runtime of our program from factorial time to exponential time, and reach our throughput goals with the use of parallelism and code optimization.
+- our parallelism gives us an (on average) linear trend in speedup, though, as there are only 4 cores on a standard ARM processor, we don't expect an extreme speed boost from this fact.
+- we set up a framework for plotting relevant quantities which can be used to test future simulations for this project
+- we saw somewhat expected results for hits data and energy/spatial noise
+- have not found a peak in the p-value plot, so the best plan seems to just be to use the lowest value we've tested.
+- biggest things to focus on are the hits to hits used and the trend in estimated energy noise
+- by limiting our reconstruction of certain events, we can increase our throughput while maintaining a similar overall accuracy (reference numbers)
+    - since higher numbers of hits are less common, the deficit in accuracy is almost guaranteed to be smaller than the one predicted in this paper for each cutoff of #hits
+- The trend of predicted energy accuracy shows that our accuracy increases as we get closer to the true value (for a given number of hits)
+    - if this holds with the Geant data, it is a good way to get an estimate of the true energy noise, and we can then set that value to give us the best accuracy we can.
 
 \section{Future Work}
+- we need to get the geant data to work
+- we need to investigate these trends further in the Geant data
+    - events with more hits are less likely, so that will affect our accuracy
+    - in our current graphs we are giving all events equal weight, which is not a good approximation of real Compton scattering
+    - we should do a cost/benefit analysis with that taken into account, and perhaps we would be able to cut even more hits than these graphs suggest
+    - we would expect to see something like the sum of our graphs weighted by the probability of each number of hits
+- test p-value for a peak in accuracy
+- make toy model simulator better (real probabilities for interaction, etc)
+- investigate whether further parallelism would be of use (in the loop) or if it would simply bog down the computation with more overhead time.
