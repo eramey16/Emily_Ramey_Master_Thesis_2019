@@ -1,6 +1,8 @@
 \chapter{Conclusion}
 
 \section{Discussion}
+
+
 - through a tree search, we were able to improve the average-case runtime of our program from factorial time to exponential time, and reach our throughput goals with the use of parallelism and code optimization.
 - our parallelism gives us an (on average) linear trend in speedup, though, as there are only 4 cores on a standard ARM processor, we don't expect an extreme speed boost from this fact.
 - we set up a framework for plotting relevant quantities which can be used to test future simulations for this project
@@ -22,3 +24,5 @@
 - test p-value for a peak in accuracy
 - make toy model simulator better (real probabilities for interaction, etc)
 - investigate whether further parallelism would be of use (in the loop) or if it would simply bog down the computation with more overhead time.
+
+- Though we use $\chi^2$-pruning on our tree search algorithm, we still are performing this operation sequentially within each of our parallel threads. We have not implemented this parallelism yet since we have already reached our current timing goals, but if we ever need to improve the runtime further we could always introduce parallelism into the tree search itself. (*** future work section) The height of the tree is only N nodes, where N is the number of hits, so theoretically we could reach a linear time for that part of our algorithm, though in practice we would need N! processors to acheive this kind of speed improvement, not to mention the overhead time that the creation of each parallel thread would need. It is not clear what kind of speed improvements we would see in practice, but it may be useful to investigate this in future projects.

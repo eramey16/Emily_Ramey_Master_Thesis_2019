@@ -57,16 +57,9 @@ We define throughput here as the execution rate of a task: $Q = \rho v A = \frac
 %%% Number of hits
 
 \section{Total hits used}
-To ensure that our program is behaving the way we want it to, we investigate its behavior using events with various numbers of hits. We can see from Figure \ref{fig:hits_speed} that our throughput decreases exponentially with increasing numbers of simulated hits. While not ideal, this is an improvement on our original estimate of a factorial increase in computation time. Though, theoretically, the worst-case time complexity of our program remains the same as in the iterative version, tree search improves the average-case complexity of our search algorithm and displays improved performance over a large number of simulated photons.
+To ensure that our program is behaving correctly, we investigate its behavior using events with increasing numbers of hits. We can see from Figure \ref{fig:hits_speed} that our throughput decreases exponentially with increasing numbers of simulated hits. While not ideal, this is an improvement on our original estimate of a factorial increase in computation time for increasing hits. Though, theoretically, the worst-case time complexity of our program remains the same as in the iterative version, tree search improves the average-case complexity of our search algorithm and displays improved performance over a large number of simulated photons.
 
 In plotting the accuracy of our program for increasing numbers of hits (Figure \ref{fig:hits_acc}) we find some interesting results. The accuracy peaks at 5 hits simulated. It is unclear from the algorithm exactly why this is, but it is possible that increasing the number of hits past a certain point introduces more error, while having fewer hits to work with does not constrain the problem enough. If a similar trend holds for testing on more accurate simulators, we may consider weighting our angle reconstructions based on these probabilities, using them as a prior when we calculate our final source position from the available angle reconstructions.
-
-- We can see that our throughput appears to go down exponentially as we increase the number of hits for each event. This is an improvement on our original algorithm, which had a complexity of N!. If our only speed improvements were the results of parallelism, we would still expect to see factorial time complexity, but this shows that our tree search algorithm has improved the average-case runtime of our program.
-
-- Though we use $\chi^2$-pruning on our tree search algorithm, we still are performing this operation sequentially within each of our parallel threads. We have not implemented this parallelism yet since we have already reached our current timing goals, but if we ever need to improve the runtime further we could always introduce parallelism into the tree search itself. (*** future work section) The height of the tree is only N nodes, where N is the number of hits, so theoretically we could reach a linear time for that part of our algorithm, though in practice we would need N! processors to acheive this kind of speed improvement, not to mention the overhead time that the creation of each parallel thread would need. It is not clear what kind of speed improvements we would see in practice, but it may be useful to investigate this in future projects.
-
-- Interestingly, we see a peak in our accuracy for 5-hit events
-- One might expect an upward linear trend, indicating that we can reconstruct events more accurately when we have more data on them, however with more data comes more noise and more chance of an error in measurement. (***I have no idea if this is the right explanation.) This raises the possibility of weighting certain events higher based on their expected accuracy (or using this distribution as a prior on our calculation) later on when we are localizing the source position.
 
 \begin{figure}
     \centering
@@ -84,135 +77,125 @@ In plotting the accuracy of our program for increasing numbers of hits (Figure \
 
 %%% Hits v hits Used
 
-\section{Hits used in reconstruction}
-- Accuracy seems to tail off around 6-8 hits for the toy model
-- photons/sec goes down pretty linearly as we increase hits used
-- We will likely see similar trends with Geant/real data, meaning we can fix a maximum number of hits to use (say, 10), and only sacrifice a few percentage points in accuracy while saving a significant amount of time on events with more hits.
-- We expect that events with high numbers of hits will be much less likely than events with low numbers of hits, so there may be different optimal cutoffs for different source distributions.
+\section{Reconstructed hits}
+We next investigate our program's performance varying both the total number of hits for each event and the number of hits we use in our reconstruction. When we stop computation at a certain number of hits, the ordering with the lowest $\chi^2$-value we have found so far becomes our chosen reconstruction. While this would in theory decrease the computation time for each event, it also has the potential to also decrease the overall accuracy due to the fact that we are not using all the information available to us in our reconstruction. To determine how big the trade-off is in accuracy and reconstruction speed, we simulate each possible combination of total hits versus reconstructed hits and plot one line for each type of event. So, each set of events with N hits is its own line, and each point in the line indicates a different number of hits used in its reconstruction. The results in speed and accuracy are displayed in Figures \ref{fig:hits_v_hitsUsed_speed} and \ref{fig:hits_v_hitsUsed_acc}, respectively.
+
+As expected, our throughput decreases with increasing hits used in reconstruction while accuracy increases. For throughput, this trend is especially pronounced for events with more hits, and seems to drop sharply around 10-12 hits. The opposite is true of our accuracy, with gains tailing off at around 6-8 hits. Beyond this number, using more hits in reconstruction only gives us marginal gains in accuracy while significantly decreasing our speed. It would be reasonable, therefore, to set a maximum number of reconstructed hits for all events, increasing our reconstruction speed by sacrificing a small amount of accuracy. It is not immediately clear from our data what the optimal cutoff value should be, as we would need the correct energy distribution of our source to predict any losses in our overall accuracy. In a real-world test setting, events with high numbers of hits are much less probable than events with low numbers of hits, so our losses in overall accuracy would likely be less severe than those predicted for a certain event type.
+
+Despite these considerations, we can perform some preliminary calculations assuming a flat source distribution (i.e. all event types are equally probable), shown in Figure \ref{fig:hits_v_hitsUsed_resids}. For each possible cutoff value in reconstructed hits, we calculate the residual accuracy, or the accuracy lost by ignoring higher orders of hits. This way, we can decide how much accuracy we are willing to trade for an increase in speed and set the maximum cutoff accordingly. Similar calculations can be done for residuals in speed.
+
 - *** needs to be run again on the pi
+- *** possibly do the residuals in speed
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_hits_v_hitsUsed_speed.png}
-    \caption{Decrease in throughput with hits used in reconstruction}
-    \label{fig:hits_v_hitsUsed}
+    \caption{Decrease in speed with hits used in reconstruction}
+    \label{fig:hits_v_hitsUsed_speed}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_hits_v_hitsUsed_accuracy.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{Increase in accuracy with hits used in reconstruction}
+    \label{fig:hits_v_hitsUsed_acc}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/mean_resid_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{Residual accuracy for an increasing cutoff in reconstructed hits}
+    \label{fig:hits_v_hitsUsed_resids}
 \end{figure}
 
-\section{p-value}
-- visible correlation, but try to get a better one
-- distinct downward trend in accuracy as p-value gets larger. This indicates we should use our highest p-value tested, and perhaps investigate even smaller ones.
-- no clear trend in speed graph. Slight upward line until large error bar on 0.10 p-value
+\section{Cutoff values}
+\subsection{$\chi^2$ cutoff}
+Changing the p-value of our calculation changes our certainty in our results. If we use a smaller p-value, we can be more certain that any orderings we exclude are truly bad ones, but we also cannot exclude as many orderings, so we expect that our speed will increase and our accuracy will decrease as our p-values get larger. Our results confirm this expectation, as shown in Figures \ref{fig:p_speed} and \ref{fig:p_acc}. Over our tested range of p-values, our accuracy has a range of about 5\%, while our reconstruction speed only changes by about 1-2\%. Based on these tests, it would be most efficient to choose one of the smaller p-values tested for our final calculations, as it would not significantly affect our overall runtime.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_p_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{p-value vs. reconstruction speed}
+    \label{fig:p_speed}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_p_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{p-value vs. reconstruction accuracy}
+    \label{fig:p_acc}
 \end{figure}
 
-\section{$\eta$-tolerance}
-- There seems to be a slight periodic trend in the eta accuracy, though it is difficult to tell with the error bars
-- could run with larger number of photons to find out for sure
+\subsection{$\eta'$ cutoff}
+There is no clear trend in our results for $\eta'$ tolerance, shown in Figures \ref{fig:eta_speed} and \ref{fig:eta_acc}. Though there are sharp drops in reconstruction speed for certain $\eta'$ values, this could just as easily be due to processor error as a real trend in the data, and the large uncertainties would cast doubt on any trends perceived. In accuracy, there is similarly no clear trend, and the range is so small as to be insignificant for our purposes.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_eta_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{$\eta'$ tolerance vs. reconstruction speed}
+    \label{fig:eta_speed}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_eta_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \caption{$\eta'$ tolerance vs. accuracy}
+    \label{fig:eta_acc}
 \end{figure}
 
-\section{Predicted Noise}
-- speed for estimated energy noise has a slight downward trend, but the noise threshold is too high to draw any real conclusions. Most throughput values appear within a margin of about 10\%  of the assumed trend line.
-- accuracy goes up by quite a bit when we predict more energy noise rather than less, but tails off at about 0.22, which is what the actual value of noise is. This could be incredibly useful in real-world applications, as we would be able to tell how much actual energy noise there is simply from a graph like this.
-- of course, real-world applications are always more complicated, so this bears further research, but it is a promising indication.
-- spatial noise does not allow us to draw many conclusions, as the ranges are so small that the error bars eclipse any minute trends in the data. 
+\section{Noise}
+We must input a noise level in our reconstruction calculations in order to get accurate results, but it is impossible to know the true noise level that we will see when the APT is operational. Thus, we test different levels of simulated noise and predicted noise to determine if there is any correlation between them.
+
+\subsection{Predicted Noise}
+We simulate different levels of predicted noise by changing the $a$ parameter in our energy calculations and the $\sigma_{sp}$ parameter in our spatial calculations, and our results are shown in Figures \ref{fig:predicted_speed} and \ref{fig:predicted_acc}. There are no significant trends in reconstruction speed when the simulated noise is changed, which stands to reason as our calculation is the same either way. The same goes for the accuracy of our predicted spatial noise, which has too small a range to be considered an effective parameter. However, the accuracy of our predicted energy noise does show a clear trend which flattens out as the predicted energy noise approaches the true energy noise. If we overestimate the noise, we see the same or very similar accuracy to a correct noise estimate, but if we underestimate the noise we see a severe decrease in accuracy. If this trend holds for more robust simulator data, it could be a good way to probe the true background noise when the telescope is in operation.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_enFactor_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_enFactor_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_spFactor_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
+        \centering
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_enFactor_speed.png}
+        \end{minipage}
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_spFactor_speed.png}
+        \end{minipage}
+        \caption{Reconstruction speed with increasing levels of predicted noise}
+        \label{fig:predicted_speed}
 \end{figure}
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_spFactor_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
+        \centering
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_enFactor_acc.png}
+        \end{minipage}
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_spFactor_acc.png}
+        \end{minipage}
+        \caption{Reconstruction accuracy with increasing levels of predicted noise}
+        \label{fig:predicted_acc}
 \end{figure}
 
-\section{Simulated Noise}
-- helps with proof of concept - we want to check the trends are as we expect
-- we expect accuracy to go down with increased noise, and it does for both
-- we expect throughput to remain about the same, which it also does within some margin of error
+\subsection{Simulated Noise}
+We also test our program's speed and accuracy with differing levels of simulated noise, shown in Figures \ref{fig:sim_speed} and \ref{fig:sim_acc}. We see fairly expected results, that there are no clear trends in reconstruction speed but that the accuracy goes down with increasing noise in our detected events. This is useful as a check on our toy model simulator, as less clear trends in the accuracy might prompt us to evaluate whether our simulator works as we expect it to.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_enNoise_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_enNoise_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
+        \centering
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_enNoise_speed.png}
+        \end{minipage}
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_spNoise_speed.png}
+        \end{minipage}
+        \caption{Reconstruction speed with increasing simulated noise level}
+        \label{fig:sim_speed}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_spNoise_speed.png}
-    \caption{Caption}
-    \label{fig:my_label}
+    \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_enNoise_acc.png}
+        \end{minipage}
+        \begin{minipage}{0.49\textwidth} \centering
+        \includegraphics[width=\textwidth]{graphs/pi_spNoise_acc.png}
+        \end{minipage}
+        \caption{Reconstruction accuracy with increasing simulated noise level}
+        \label{fig:sim_acc}
 \end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{graphs/pi_spNoise_acc.png}
-    \caption{Caption}
-    \label{fig:my_label}
-\end{figure}
-
