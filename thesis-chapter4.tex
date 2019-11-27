@@ -73,7 +73,7 @@ There are many variables that have the potential to affect the algorithm's perfo
 
 \begin{enumerate}
     \item Power - We use the WITRN U2 USB Power Monitor to test the power used by the raspberry pi, both when it is idle and when it is running our software.
-    \item Single vs. double precision - As our program is written in C++, we have a choice of whether to use \texttt{float} values (single precision) or \texttt{double} values in our calculations.
+    \item Single vs. double precision - As our program is written in C++, we have a choice of whether to use \texttt{float} values (single precision) or \texttt{double} values in our calculations. Single precision values use fewer bytes than double values, making them faster to use in calculations but sometimes less accurate due to rounding error.
     \item Hits simulated - The number of hits we simulate per photon (with the toy model).
     \item Hits used - The number of hits used to reconstruct a photon's trajectory. Once the specified number of hits is reached, the sequence with the lowest eta value is presumed to be the correct one.
     \item $\chi^2$ cutoff - The p-value we use for our cutoff $\chi^2$ values. Ex: a p-value of .1 would give us a 10\% probability of cutting off a good triple, whereas a p-value of .01 would give us a 1\% probability of doing so.

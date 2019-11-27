@@ -13,25 +13,3 @@ Though this project laid the groundwork for the simulation and reconstruction of
 Testing on a better simulator would also allow us to examine the overall accuracy of our program for different source distributions rather than just the accuracy for events with a given number of hits. In our current tests, all events have equal weight, whereas Compton scatters in nature are much more likely to have 2-3 hits than any larger number. This means that the overall accuracy would be a weighted mean of those we found in section \ref{totalhits}, with the overall shape of the distribution depending on the emission distribution of the source. With these probabilities taken into account, we would potentially be able to optimize our program for the expected source distribution. Correct figures for the accuracy would also be very useful as a prior on the source reconstruction algorithm, which has yet to be developed.
 
 The use of parallelism in our algorithm also requires some further investigation. The current program runs each photon in parallel, but theoretically each branch of our tree search could also be done simultaneously. There would be a small amount of overhead associated with the creation of each parallel thread, so at some point the extra parallelism would cease to be worth the decreased speed. Though we are meeting our speed goals currently, it would be interesting to investigate the optimal level of parallelism for a program such as this, in case it is needed in the future. 
-
-- we need to get the geant data to work
-- we need to investigate these trends further in the Geant data
-    - events with more hits are less likely, so that will affect our accuracy
-    - in our current graphs we are giving all events equal weight, which is not a good approximation of real Compton scattering
-    - we should do a cost/benefit analysis with that taken into account, and perhaps we would be able to cut even more hits than these graphs suggest
-    - we would expect to see something like the sum of our graphs weighted by the probability of each number of hits
-- make toy model simulator better (real probabilities for interaction, etc)
-- investigate whether further parallelism would be of use (in the loop) or if it would simply bog down the computation with more overhead time.
-
-- Though we use $\chi^2$-pruning on our tree search algorithm, we still are performing this operation sequentially within each of our parallel threads. We have not implemented this parallelism yet since we have already reached our current timing goals, but if we ever need to improve the runtime further we could always introduce parallelism into the tree search itself. (*** future work section) The height of the tree is only N nodes, where N is the number of hits, so theoretically we could reach a linear time for that part of our algorithm, though in practice we would need N! processors to acheive this kind of speed improvement, not to mention the overhead time that the creation of each parallel thread would need. It is not clear what kind of speed improvements we would see in practice, but it may be useful to investigate this in future projects.
-
-- through a tree search, we were able to improve the average-case runtime of our program from factorial time to exponential time, and reach our throughput goals with the use of parallelism and code optimization.\\
-- our parallelism gives us an (on average) linear trend in speedup, though, as there are only 4 cores on a standard ARM processor, we don't expect an extreme speed boost from this fact.\\
-- we set up a framework for plotting relevant quantities which can be used to test future simulations for this project\\
-- we saw somewhat expected results for hits data and energy/spatial noise\\
-- have not found a peak in the p-value plot, so the best plan seems to just be to use the lowest value we've tested.\\
-- biggest things to focus on are the hits to hits used and the trend in estimated energy noise\\
-- by limiting our reconstruction of certain events, we can increase our throughput while maintaining a similar overall accuracy (reference numbers)\\
-    - since higher numbers of hits are less common, the deficit in accuracy is almost guaranteed to be smaller than the one predicted in this paper for each cutoff of \#hits\\
-- The trend of predicted energy accuracy shows that our accuracy increases as we get closer to the true value (for a given number of hits)\\
-    - if this holds with the Geant data, it is a good way to get an estimate of the true energy noise, and we can then set that value to give us the best accuracy we can.\\

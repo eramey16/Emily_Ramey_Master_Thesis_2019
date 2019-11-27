@@ -40,13 +40,13 @@ If we knew which two hits came first in the scattering sequence, we could get th
 To make things simpler for our algorithm, we break each photon's series of hits into triples, one for each possible sequence of three hits. Each triple has a physical angle - for example, $\phi_2$ in figure \ref{fig:scatters} - and an energy angle, which is calculated by equation \ref{eq:compton} using the summed energy deposits of the sequence. One obstacle to our calculations is that the scattering angle does not depend on the energy deposited at the vertex of a given triple, but on the total energy of the photon both before and after the hit at the vertex. This means that we cannot calculate the energy angles individually, but always as part of a sequence. If we change the hits in the sequence before a given triple, it changes the energy calculations for the triple itself. To describe these constraints mathematically, we use equations adapted from Boggs \& Jean (2000)\cite{Boggs}:
 
 \begin{align}
-    W_i &= \frac{1}{m_ec^2}\sum_{j=i+1}^N E_j\\
-    \label{eq:new_compton}\eta' &= \cos\theta' = 1+\frac{1}{W_i}-\frac{1}{W_{i+1}}\\
-    \eta &= \cos\theta = \hat{r}_i \cdot \hat{r}_{i+1}\\
-    \vec{r}_i &= \vec{x}_i - \vec{x}_{i-1}
+    W_i &= \frac{1}{m_ec^2}\sum_{j=i+1}^N E_j & \text{Unitless energy}\\
+    \label{eq:new_compton}\eta'_i &= \cos\theta' = 1+\frac{1}{W_i}-\frac{1}{W_{i+1}} &\text{Energy angle}\\
+    \eta_i &= \cos\theta = \hat{r}_i \cdot \hat{r}_{i+1} &\text{Spatial angle} \label{eq:eta}\\
+    \hat{r}_i &= \frac{\vec{x}_i - \vec{x}_{i-1}}{|\vec{x}_i - \vec{x}_{i-1}|} & \text{Direction before hit $i$}
 \end{align}
 
-Where $W_i$ is the unitless energy of the photon after $i$ hits in the detector ($W_0$ would be the initial/incident energy), and the photon interacts with the detector $N$ times total. Equation \ref{eq:new_compton} is just a reformulation of the original Compton equation, \ref{eq:compton}, with $\theta'$ representing the energy scattering angle at hit $i$. $\theta$ is the spatial angle of hit $i$ (previously referred to as the physical angle), and is calculated using a dot product, where $\vec{x}_i$ refers to the position of hit $i$. As finding the inverse cosine can cost us valuable computation time, we use $\eta$ and $\eta'$ to represent the cosine of the spatial and energy angles, respectively, and compare the two directly, rather than comparing the angle values themselves.
+$N$ is the event's total number of hits in the detector and $W_i$ is the unitless energy of the photon after hit $i$ (i.e. $W_0$ is the initial energy of the photon and $W_{i>0} < W_0$). Equation \ref{eq:new_compton} is just a reformulation of the original Compton equation (\ref{eq:compton}) with $\theta'$ representing the energy scattering angle at hit $i$. $\theta$ is the spatial angle of hit $i$ (previously referred to as the physical angle), and is calculated using a dot product, where $\vec{x}_i$ refers to the position of hit $i$ and $\vec{r}_i$ is the vector between hit $i-1$ and hit $i$. Therefore $\hat{r}_i$ is the direction of the photon immediately before hit $i$, and $\hat{r}_{i+1}$ is its direction immediately after. As finding the inverse cosines of equations \ref{eq:new_compton} and \ref{eq:eta} can cost us valuable computation time, we leave them in their cosine form, $\eta$ and $\eta'$, and compare these values rather than the values of the angles themselves. The cosine function is uniquely determined for $\theta, \theta' \in [0, 2\pi)$, so the two operations are mathematically equivalent.
 
 \subsection*{The $\chi^2$ metric}
 To compare the spatial and energy angles of a given sequence of hits, we use a probability estimate given by the $\chi^2$ distribution:

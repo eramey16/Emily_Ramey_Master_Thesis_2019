@@ -10,7 +10,7 @@ We test each of the specified variables over a range of values to examine trends
     Value: & single & 5 & 5 & 0.01 & 1.0 & 1 mm & 0.22 \\
     \hline
     \end{tabular}
-    \caption{Caption}
+    \caption{Default values used in computation}
     \label{tab:def_vals}
 \end{table}
 
@@ -31,7 +31,7 @@ The precision of our floating point values refers to how many bits we use in cal
         Throughput ($\gamma/sec$) & \num{5.08 \pm 0.70 e5} & \num{3.85 \pm .51 e5} \\
         \hline
     \end{tabular}
-    \caption{Caption}
+    \caption{Speed and accuracy results for single and double precision values}
     \label{tab:floatvdouble}
 \end{table}
 
@@ -65,14 +65,14 @@ In plotting the accuracy of our program for increasing numbers of hits (Figure \
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_hits_speed.png}
-    \caption{Caption}
+    \caption{Reconstruction speed with increasing numbers of hits per event}
     \label{fig:hits_speed}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/pi_hits_acc.png}
-    \caption{Caption}
+    \caption{Reconstruction accuracy with increasing numbers of hits per event}
     \label{fig:hits_acc}
 \end{figure}
 
@@ -86,8 +86,8 @@ As expected, our throughput decreases with increasing hits used in reconstructio
 
 Despite these considerations, we can perform some preliminary calculations assuming a flat source distribution (i.e. all event types are equally probable), shown in Figure \ref{fig:hits_v_hitsUsed_resids}. For each possible cutoff value in reconstructed hits, we calculate the residual accuracy, or the accuracy lost by ignoring higher orders of hits. This way, we can decide how much accuracy we are willing to trade for an increase in speed and set the maximum cutoff accordingly. Similar calculations can be done for residuals in speed.
 
-- *** needs to be run again on the pi
-- *** possibly do the residuals in speed
+- *** should be run again on the pi\\
+- *** possibly include the residual speed as well
 
 \begin{figure}
     \centering
