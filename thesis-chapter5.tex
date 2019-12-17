@@ -1,11 +1,11 @@
 \chapter{Results}
-We test each of the specified variables over a range of values to examine trends in the reconstruction speed and overall accuracy. Unless otherwise noted, the default values for each simulation are listed in Table \ref{tab:def_vals}. Our error bars represent one standard deviation away from the mean and are calculated under the assumption of Gaussian noise. We assume this to be a good approximation of the true noise distribution based on the central limit theorem of statistics ***(make sure you've explained).\\
+We test each of the specified variables over a range of values to examine trends in the reconstruction speed and overall accuracy. Unless otherwise noted, the default values for each simulation are listed in Table \ref{tab:def_vals}. Our error bars represent one standard deviation away from the mean and are calculated under the assumption of Gaussian noise. We assume this to be a good approximation of the true noise distribution based on the central limit theorem of statistics ***(cite/explain further).\\
 
 \begin{table}[h]
     \centering
     \begin{tabular}{|c|c|c|c|c|c|c|c|}
     \hline
-    Variable: & Precision & Total hits & Hits used & P-value & $\eta'$-tolerance & $\sigma_{sp}$ & $a$ \\
+    Variable: & Precision & Total hits & Hits used & p-value & $\eta'$-tolerance & $\sigma_{sp}$ & $a$ \\
     \hline
     Value: & single & 5 & 5 & 0.01 & 1.0 & 1 mm & 0.22 \\
     \hline
@@ -43,14 +43,14 @@ We define throughput here as the execution rate of a task: $Q = \rho v A = \frac
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/Cassini_latency_speedup.png}
-    \caption{Speedup of reconstruction algorithm in latency.}
+    \caption{Speedup of reconstruction algorithm in latency, fit with a linear trendline (red).}
     \label{fig:latency_speedup}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/Cassini_throughput_speedup.png}
-    \caption{Speedup of reconstruction algorithm in throughput.}
+    \caption{Speedup of reconstruction algorithm in throughput, fit with a linear trendline (red).}
     \label{fig:through_speedup}
 \end{figure}
 
@@ -86,7 +86,7 @@ As expected, our throughput decreases with increasing hits used in reconstructio
 
 Despite these considerations, we can perform some preliminary calculations assuming a flat source distribution (i.e. all event types are equally probable), shown in Figure \ref{fig:hits_v_hitsUsed_resids}. For each possible cutoff value in reconstructed hits, we calculate the residual accuracy, or the accuracy lost by ignoring higher orders of hits. This way, we can decide how much accuracy we are willing to trade for an increase in speed and set the maximum cutoff accordingly. Similar calculations can be done for residuals in speed.
 
-- *** should be run again on the pi\\
+- *** should be run again on the pi to make sure it wasn't mislabeled Cassini data\\
 - *** possibly include the residual speed as well
 
 \begin{figure}
@@ -106,13 +106,13 @@ Despite these considerations, we can perform some preliminary calculations assum
 \begin{figure}
     \centering
     \includegraphics[width=0.7\textwidth]{graphs/mean_resid_acc.png}
-    \caption{Residual accuracy for an increasing cutoff in reconstructed hits}
+    \caption{Residual accuracy for an increasing max cutoff in reconstructed hits}
     \label{fig:hits_v_hitsUsed_resids}
 \end{figure}
 
 \section{Cutoff values}
 \subsection{$\chi^2$ cutoff}
-Changing the p-value of our calculation changes our certainty in our results. If we use a smaller p-value, we can be more certain that any orderings we exclude are truly bad ones, but we also cannot exclude as many orderings, so we expect that our speed will increase and our accuracy will decrease as our p-values get larger. Our results confirm this expectation, as shown in Figures \ref{fig:p_speed} and \ref{fig:p_acc}. Over our tested range of p-values, our accuracy has a range of about 5\%, while our reconstruction speed only changes by about 1-2\%. Based on these tests, it would be most efficient to choose one of the smaller p-values tested for our final calculations, as it would not significantly affect our overall runtime.
+Changing the p-value of our calculation changes the level of certainty in our results. If we use a smaller p-value, we can be more certain that any orderings we exclude are truly bad ones, but we also cannot exclude as many orderings, so we expect that our speed will decrease and our accuracy will increase as our p-values get smaller. Our results confirm this expectation, as shown in Figures \ref{fig:p_speed} and \ref{fig:p_acc}. Over the tested range of p-values, our accuracy has a range of about 5\%, while our reconstruction speed only changes by about 1-2\%. Based on these tests, it would be most efficient to choose one of the smaller p-values tested for our final calculations, as it would not significantly affect our overall runtime.
 
 \begin{figure}
     \centering
@@ -129,7 +129,7 @@ Changing the p-value of our calculation changes our certainty in our results. If
 \end{figure}
 
 \subsection{$\eta'$ cutoff}
-There is no clear trend in our results for $\eta'$ tolerance, shown in Figures \ref{fig:eta_speed} and \ref{fig:eta_acc}. Though there are sharp drops in reconstruction speed for certain $\eta'$ values, this could just as easily be due to processor error as a real trend in the data, and the large uncertainties would cast doubt on any trends perceived. In accuracy, there is similarly no clear trend, and the range is so small as to be insignificant for our purposes.
+There is no clear trend in our results for $\eta'$ tolerance, shown in Figures \ref{fig:eta_speed} and \ref{fig:eta_acc}. Though there are sharp drops in reconstruction speed for certain $\eta'$ values, this could just as easily be due to processor error as our program, and the large uncertainties make it difficult to draw any conclusions. In accuracy, there is similarly no clear trend, and the range is so small as to be insignificant for our purposes.
 
 \begin{figure}
     \centering
