@@ -68,11 +68,12 @@ In our program, we keep track of the $\chi^2$ value for each \texttt{Hit} we add
 \caption{Tree search reconstruction algorithm for one photon}\label{alg:recon}
 \hspace{\algorithmicindent} \textbf{Input:} \texttt{x} - a 1D array of \texttt{Hit} values for one event, \texttt{n} - the number of hits in the event
 \begin{algorithmic}[1]
-    \For {\texttt{Hit} k in each triple} \label{ln:precompute} \Comment{Precompute spatial angles, $\eta$}
+    \State // Pre-compute spatial angles, $\eta$:
+    \For {i,j,k in permutations(n, 3)} \label{ln:precompute} \Comment{Loop over all triples}
         \State // Calculate spatial angle:
-        \State $\vec{x}_{k-1}, \vec{x}_k, \vec{x}_{k+1} \gets$ $x$[k-1], $x$[k], $x$[k+1] \Comment{Consecutive hit positions}
-        \State $\hat{r}_k, \hat{r}_{k+1} \gets |\vec{x}_{k} - \vec{x}_{k-1}|$, $|\vec{x}_{k+1}-\vec{x}_{k}|$ \Comment{Unit vectors along photon direction}
-        \State triples[k-1][k][k+1] = $\hat{r}_k\cdot\hat{r}_{k+1}$ \Comment{Save spatial angle}
+        \State $\vec{x}_{i}, \vec{x}_j, \vec{x}_{k} \gets$ $x$[i], $x$[j], $x$[k] \Comment{Consecutive hit positions}
+        \State $\hat{r}_i, \hat{r}_j \gets |\vec{x}_j - \vec{x}_i|$, $|\vec{x}_k-\vec{x}_j|$ \Comment{Unit vectors along photon direction}
+        \State triples[i][j][k] = $\hat{r}_i\cdot\hat{r}_j$ \Comment{Save spatial angle}
     \EndFor
     \State
     \State min$\chi^2 \gets \infty$
@@ -93,9 +94,9 @@ In our program, we keep track of the $\chi^2$ value for each \texttt{Hit} we add
 
 \begin{algorithm}
 \caption{Recursive function in tree search}\label{alg:recurse}
-\hspace{\algorithmicindent} \textbf{Input:} $h_0$, $h_1$ - current and next hit, \texttt{n} - number of hits left, current $\chi^2$ value
+\hspace{\algorithmicindent} \textbf{Input:} \texttt{i}, \texttt{j} - current and next hit indices, respectively, \texttt{n} - number of hits left, $\chi^2$ - current $\chi^2$ value for the sequence
 \begin{algorithmic}[1]
-\Function{findOptRecursive}{$h_0$, $h_1$, $n$, $\chi^2$}
+\Function{findOptRecursive}{i, j, $n$, $\chi^2$}
     \State // Base case:
     \If{n == 0} \label{ln:hitsUsed}
         \State \Return $\chi^2$
@@ -124,13 +125,26 @@ Another performance improvement comes from pre-calculating the spatial angles fo
 
 \subsection{$\chi^2$ and $\eta$ cutoffs} \label{pruning}
 
-During our tree search, we can 'prune' some sub-trees by filtering out certain sequences before we reach the final recursion depth. Depending on the input ordering of hits, we could still end up having to search the whole tree for the correct path, but generally these methods will improve our runtime on average. We can prune a sub-tree if:
+During our tree search, we can \textit{prune} some sub-trees by filtering out certain sequences before we reach the final recursion depth. Depending on the input ordering of hits, we could still end up having to search the whole tree for the correct path, but generally these methods will improve our runtime on average. We can prune a sub-tree if:
 \begin{enumerate}
-    \item The $\chi^2$ value is already greater than the running minimum.
-    \item The cosine of the energetically reconstructed angle, $\eta'$, is greater than 1 by some amount, the $\eta'$ cutoff.
-    \item The $\chi^2$ value of a number of hits exceeds what we would expect for the length of the sequence (see discussion of p-values below).
+    \item \textbf{The $\chi^2$ value is already greater than the running minimum.}
+    
+    Since we always assume the sequence with the minimum $\chi^2$ is best, there is no need to check orderings which have already exceeded our best value.
+    
+    \item \textbf{The cosine of the energetically reconstructed angle, $\eta'$, is greater than 1 by some amount, the $\eta'$ cutoff.}
+    
+    Our algorithm might return an $\eta'$-value greater than 1 if we either have the wrong ordering of hits or if there is significant noise in the measurement, so we only prune the tree for values significantly above 1, to be safe.
+    
+    \item \textbf{The $\chi^2$ value of a sequence exceeds what we would expect for the length of the sequence.}
+    
+    The p-value is related to the probability that the $\chi^2$ we calculate (based on a Gaussian assumption of noise) will naturally exceed a given $\chi^2$ value with the same degrees of freedom. In other words, it is the probability that a good ordering would have a $\chi^2$ value higher than the expected one. We use a look-up table such as the one shown in Figure \ref{fig:p-val} to find the maximum allowed $\chi^2$ value at each step in our calculation and cut off any sequence which exceeds it. The degrees of freedom we use in the $\chi^2$ table is the number of hits in the sequence so far. For example, if we choose a p-value of 0.01, it means we will not accept any orderings that have less than a 1\% chance of being correct. Using this with Figure \ref{fig:p-val}, this means we will prune the tree for any $\chi^2$ value greater than 6.635 after one hit, greater than 9.210 after two hits, greater than 11.345 after three hits, and so on.
+    
+    \pagebreak
+    
+    \item \textbf{We have reached some maximum defined recursion depth, which we refer to as the \textit{reconstructed hits}}
+    
+    Though this is not shown directly in the pseudocode, it is implemented by changing the base case in Line \ref{ln:hitsUsed} of our program to stop the program after a certain number of hits have been processed. We then assume that the sequence with the minimum $\chi^2$ at the cutoff point has the minimum overall $\chi^2$, though there is some chance that this is not the case (the exact probability depends on the cutoff point). This serves to decrease our computation time, but it also means that we do not take all of our data into account, which we expect will decrease our accuracy.
 \end{enumerate}
-Our algorithm might return an $\eta'$-value greater than 1 if we either have the wrong ordering of hits or if there is significant noise in the measurement, so we only prune the tree for values significantly above 1, to be safe. The p-value is related to the probability that the $\chi^2$ we calculate (based on a Gaussian assumption of noise) will naturally exceed a given $\chi^2$ value with the same degrees of freedom. In other words, it is the probability that a good ordering would have a $\chi^2$ value higher than the expected one. We use a look-up table such as the one shown in Figure \ref{fig:p-val} to find the maximum allowed $\chi^2$ value at each step in our calculation and cut off any sequence which exceeds it. The degrees of freedom we use in the $\chi^2$ table is the number of hits in the sequence so far. For example, if we choose a p-value of 0.01, it means we will not accept any orderings that have less than a 1\% chance of being correct. Using this with Figure \ref{fig:p-val}, this means we will prune the tree for any $\chi^2$ value greater than 6.635 after one hit, greater than 9.210 after two hits, greater than 11.345 after three hits, and so on.
 
 \begin{figure}
     \centering
