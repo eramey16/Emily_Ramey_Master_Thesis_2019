@@ -11,10 +11,10 @@
     \label{fig:compton_scatter}
 \end{figure}
 
-Compton scattering is a process in which a photon hits a charged particle and transfers some momentum to it in the collision. Due to conservation of momentum and energy, the photon moves away from the collision with a different wavelength and direction than it had initially, shown in Figure \ref{fig:compton_scatter}. In the APT, gamma rays from space scatter off of bound electrons in the detector material and kick them out of the layer that they had previously occupied. The gamma ray's energy can then be described with Equation \ref{eq:compton}:
+Compton scattering is a process in which a photon hits a charged particle and transfers some momentum to it in the collision. Due to conservation of momentum and energy, the photon moves away from the collision with a different wavelength and direction than it had initially, shown in Figure \ref{fig:compton_scatter}. In the APT, gamma rays from space scatter off of bound electrons in the detector material and kick them out of the layer that they had previously occupied. The gamma ray's energy can then be described with the following equation:
 
 \begin{equation}
-    \label{eq:compton}E' = \frac{E_0}{1+\frac{E_0}{m_ec^2}(1-\cos\theta)}
+    E' = \frac{E_0}{1+\frac{E_0}{m_ec^2}(1-\cos\theta)} \label{eq:compton}
 \end{equation}
 
 Where $E'$ is the energy after the collision, $E_0$ is the energy before the collision, $\theta$ is the scattering angle of the photon, and $m_e$ is the mass of the electron. Note that the scattering angle, the initial energy, and the final energy are the only free parameters in this equation, so determining any two of these values also determines the third. In reconstruction, we use the total energy deposited in the detector as the initial energy and are able to infer the energy and angle of each scatter from there.
